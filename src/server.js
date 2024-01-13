@@ -32,10 +32,35 @@ const wss = new WebSocket.Server({ server });
 // http://localhost:3000
 // ws://localhost:3000
 
+// chrome 브라우저와 edge 브라우저가 서버와 각각의 소켓으로 연결함
+// 모든 연결을 관리하는 배열 생성
+const sockets = [];
+
 wss.on("connection", (socket) => {
     // socket = 연결된 브라우저
+    sockets.push(socket);
+    socket["nickname"] = "Anonymous";
     console.log("Connected to Browser");
-    socket.send("hello!");
+
+    // 브라우저로 메시지 보내기
+    // socket.send("hello!");
+
+    //브라우저에서 메시지 이벤트 발생시 메시지를 연결된 모든 클라이언트로 보냄
+    socket.on("message", (message) => {
+        const parsedMsg = JSON.parse(message);
+        
+        switch(parsedMsg.type) {
+            case "new_message" :
+                sockets.forEach(aSocket => aSocket.send(`${socket.nickname} : ${parsedMsg.payload}`));
+                break;
+            case "nickname" :
+                socket["nickname"] = parsedMsg.payload;
+                break;
+            default : break;
+        }    
+    });
+
+    socket.on("close", () => console.log("Disconnected from the Browser"));
 })
 
-server.listen(3000, handleListen);
+server.listen(3000, handleListen) ;
