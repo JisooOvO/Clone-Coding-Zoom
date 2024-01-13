@@ -1,6 +1,7 @@
 import http from "http";
-import WebSocket from "ws";
+// import WebSocket from "ws";
 import express from "express";
+import SocketIO from "socket.io";
 
 // express 실행 -> http
 const app = express();
@@ -19,21 +20,26 @@ app.get("/*", (_,res) => res.redirect("/"));
 
 const handleListen = () => console.log('Listening on http://localhost:3000');
 
-// 포트 설정
-// app.listen(3000,handleListen);
-
 // http 서버 생성
-const server = http.createServer(app);
+const httpServer = http.createServer(app);
 
-// websocket 서버 생성
-const wss = new WebSocket.Server({ server });
+// 포트 설정
+httpServer.listen(3000,handleListen);
 
-// 두 서버를 같은 포트에서 함께 접근 가능
+// 1. websocket 서버 생성
+// const wss = new WebSocket.Server({ httpServer });
+
+// 2. socket.io 서버 생성
+const ioServer = SocketIO(httpServer);
+
+// http / ws 서버를 같은 포트에서 함께 접근 가능
 // http://localhost:3000
 // ws://localhost:3000
 
-// chrome 브라우저와 edge 브라우저가 서버와 각각의 소켓으로 연결함
-// 모든 연결을 관리하는 배열 생성
+/*
+//1. ws 를 이용하는 방법
+//hrome 브라우저와 edge 브라우저가 서버와 각각의 소켓으로 연결함
+//모든 연결을 관리하는 배열 생성
 const sockets = [];
 
 wss.on("connection", (socket) => {
@@ -64,3 +70,9 @@ wss.on("connection", (socket) => {
 })
 
 server.listen(3000, handleListen) ;
+*/
+
+// 2. socket.io 를 이용하는 방법
+ioServer.on("connection", socket => {
+    console.log(socket);
+})
