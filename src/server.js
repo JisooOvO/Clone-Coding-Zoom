@@ -1,7 +1,8 @@
 import http from "http";
 // import WebSocket from "ws";
 import express from "express";
-import SocketIO from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 
 // express 실행 -> http
 const app = express();
@@ -30,11 +31,41 @@ httpServer.listen(3000,handleListen);
 // const wss = new WebSocket.Server({ httpServer });
 
 // 2. socket.io 서버 생성
-const ioServer = SocketIO(httpServer);
+const ioServer = new Server(httpServer, {
+    cors: {
+      origin: ["https://admin.socket.io"],
+      credentials: true
+    }
+});
+
+instrument(ioServer, {
+    auth: false,
+    mode: "development",
+});
 
 // http / ws 서버를 같은 포트에서 함께 접근 가능
 // http://localhost:3000
 // ws://localhost:3000
+
+function publicRooms(){
+    const {
+        sockets : {
+            adapter : { sids, rooms },
+        },
+    } = ioServer;
+
+    const publicRooms = [];
+    rooms.forEach((_,key) => {
+        if(sids.get(key) === undefined){
+            publicRooms.push(key);
+        }
+    });
+    return publicRooms;
+}
+
+function countRoom(roomName){
+    return ioServer.sockets.adapter.rooms.get(roomName)?.size;
+}
 
 /*
 //1. ws 를 이용하는 방법
@@ -73,6 +104,78 @@ server.listen(3000, handleListen) ;
 */
 
 // 2. socket.io 를 이용하는 방법
+/*
+    실제 규모가 큰 프로그램 개발시 여러 개의 서버 필요
+    A 서버의 클라이언트가 B 서버의 클라이언트로 메시지 보낼 경우
+    adapter 를 통해 백엔드 사이에서 전송해야함
+
+    adapter 미 설정시 기본적으로 메모리를 사용 -> 다른 서버로의 통신 X
+    mongoDB나 다른 adapter 이용시 서버간 통신 가능
+
+    socket 은 rooms 와 sids 프로퍼티가 존재
+    sids => socket들의 id
+    rooms => socket id 와 같은 이름의 private room + public room
+ */
 ioServer.on("connection", socket => {
-    console.log(socket);
+    socket["nickname"] = "Anonymous";
+
+    // 이벤트, (payload, callback_function)
+    // 서버는 프론트엔드에서 받은 함수를 호출할 수 있음 -> 프론트엔드단에서 실행
+    /* 
+        보안 이슈 및 데이터베이스 삭제 코드를 실행 할 수도 있기 때문에
+        백엔드는 클라이언트가 보낸 함수를 실행해선 안됨
+    */
+
+    // 어느 이벤트에서나 실행하는 메서드
+    socket.onAny((event) => {
+        console.log(ioServer.sockets.adapter);
+        console.log(`Socket Event: ${event}`);
+    })
+
+    // 연결이 끊기기 직전 발생하는 메서드
+    socket.on("disconnecting", ()=> {
+        socket.rooms.forEach(room => socket.to(room).emit("bye", socket.nickname, countRoom(room)-1));
+        // ioServer.sockets.emit("room_change", publicRooms());
+    });
+
+    // 연결이 끊기면 발생하는 이벤트
+    socket.on("disconnect", ()=>{
+        ioServer.sockets.emit("room_change", publicRooms());
+    })
+
+    socket.on("enter_room", (nick,roomName, done) => {
+        // 방(room) 설정
+        socket.join(roomName);
+
+        socket["nickname"] = nick;
+
+        done();
+
+        // 모든 소켓에 메시지 보냄
+        ioServer.sockets.emit("room_change", publicRooms());
+
+        // 본인을 제외하고 모두에게 메시지 보냄
+        socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));        
+
+        // 서버 콘솔에서 실행
+        // console.log(roomName);
+
+        // socket id -> room의 key가 됨
+        // console.log(socket.id);
+
+        console.log(socket.rooms);
+
+        // 클라이언트 콘솔에서 실행
+        // 클라이언트로 argument 전달 가능
+        // setTimeout(()=>{
+        //     done("Hello from the server");
+        // },1000);
+    });
+
+    socket.on("new_message", (msg, roomName, done) => {
+        socket.to(roomName).emit("new_message", `${socket.nickname} : ${msg}`);
+        done();
+    })
+
+    socket.on("nickname", (nickname) => socket["nickname"] = nickname);
 })
