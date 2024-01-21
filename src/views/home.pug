@@ -19,6 +19,15 @@ html(lang="en")
                 ul
             div#room
                 h3
+                div#myStream
+                    video#myFace(autoplay, playsinline, width="400" height="400")
+                    button#mute Mute
+                    button#camera Turn Camera Off
+                    p 카메라
+                    select#cameras
+                    p 오디오
+                    select#audios
+
                 ul
                 form#msg
                     input(type="text", placeholder="message", required)

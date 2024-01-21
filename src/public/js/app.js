@@ -86,3 +86,109 @@ socket.on("room_change", (rooms) => {
         roomList.append(li);
     });
 });
+
+// ----------------------- 비디오 -------------------------- //
+const myFace = document.querySelector("#myFace");
+const muteBtn = document.querySelector("#mute");
+const cameraBtn = document.querySelector("#camera");
+const camerasSelect = document.querySelector("#cameras");
+const audiosSelect = document.querySelector("#audios");
+
+let myStream;
+let muted = false;
+let cameraOff = false;
+
+async function getMedias(){
+    try{
+        // 사용자의 모든 장치 가져오기
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(device => device.kind === "videoinput");
+        const audios = devices.filter(device => device.kind === "audioinput");
+        
+        const currentCamera = myStream.getVideoTracks()[0];
+        const currentAudio = myStream.getAudioTracks()[0];
+        
+        cameras.forEach(camera => {
+            const option = document.createElement("option");
+            option.value = camera.deviceId;
+            option.innerText = camera.label;
+            if(currentCamera.label == camera.label){
+                option.selected = true;
+            }
+            camerasSelect.appendChild(option);
+        })
+
+        audios.forEach(audio => {
+            const option = document.createElement("option");
+            option.value = audio.deviceId;
+            option.innerText = audio.label;
+            if(currentAudio.label == audio.label){
+                option.selected = true;
+            }
+            audiosSelect.appendChild(option);            
+        })
+    }catch(e){
+        console.log(e);
+    }
+}
+
+async function getMedia(videoDeviceId, audioDeviceId){
+    console.log(videoDeviceId,audioDeviceId);
+    const initialConstrains = {
+        audio : true,
+        video : { facingMode : "user" },
+    };
+
+    const cameraConstrains = {
+        audio : { deviceId : { exact : audioDeviceId } },
+        video : { deviceId : { exact : videoDeviceId } }
+    }
+
+    try {
+        // 유저 미디어 장치 가져오기
+        myStream = await navigator.mediaDevices.getUserMedia(
+            (videoDeviceId||audioDeviceId) ? cameraConstrains : initialConstrains
+        );
+        myFace.srcObject = myStream;
+
+        if(!videoDeviceId && !audioDeviceId){
+            await getMedias();
+        }
+    } catch(e){
+        console.log(e);
+    }
+}
+
+getMedia();
+
+function handleMuteClick(){
+    myStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
+    if(!muted){
+        muteBtn.innerText = "Unmute";
+        muted = true;
+    }else{
+        muteBtn.innerText = "Mute";
+        muted = false;
+    }
+}
+
+function handleCameraClick(){
+    myStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
+    if(cameraOff){
+        cameraBtn.innerText = "Turn Camera Off";
+        cameraOff = false;
+    }else{
+        cameraBtn.innerText = "Turn Camera On";
+        cameraOff = true;
+    }
+}
+
+async function handleMediaChange(){
+    await getMedia(camerasSelect.value, audiosSelect.value);
+}
+
+
+muteBtn.addEventListener("click", handleMuteClick);
+cameraBtn.addEventListener("click", handleCameraClick);
+camerasSelect.addEventListener("input", handleMediaChange);
+audiosSelect.addEventListener("input", handleMediaChange)
