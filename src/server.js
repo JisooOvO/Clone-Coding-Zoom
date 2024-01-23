@@ -128,8 +128,8 @@ ioServer.on("connection", socket => {
 
     // 어느 이벤트에서나 실행하는 메서드
     socket.onAny((event) => {
-        console.log(ioServer.sockets.adapter);
-        console.log(`Socket Event: ${event}`);
+        //console.log(ioServer.sockets.adapter);
+        // console.log(`Socket Event: ${event}`);
     })
 
     // 연결이 끊기기 직전 발생하는 메서드
@@ -143,27 +143,39 @@ ioServer.on("connection", socket => {
         ioServer.sockets.emit("room_change", publicRooms());
     })
 
-    socket.on("enter_room", (nick,roomName, done) => {
+    socket.on("enter_room", (nick,roomName) => {
+
+        console.log("Hello", nick, roomName);
+
         // 방(room) 설정
         socket.join(roomName);
 
         socket["nickname"] = nick;
-
-        done();
 
         // 모든 소켓에 메시지 보냄
         ioServer.sockets.emit("room_change", publicRooms());
 
         // 본인을 제외하고 모두에게 메시지 보냄
         socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));        
+        
+        socket.on("offer", (offer, roomName) => {
+            socket.to(roomName).emit("offer", offer);
+        })
 
+        socket.on("answer", (answer, roomName) => {
+            socket.to(roomName).emit("answer", answer);
+        })
+
+        socket.on("ice", (ice, roomName) => {
+            socket.to(roomName).emit("ice", ice);
+        })
         // 서버 콘솔에서 실행
         // console.log(roomName);
 
         // socket id -> room의 key가 됨
         // console.log(socket.id);
 
-        console.log(socket.rooms);
+        // console.log(socket.rooms);
 
         // 클라이언트 콘솔에서 실행
         // 클라이언트로 argument 전달 가능
