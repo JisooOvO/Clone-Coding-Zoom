@@ -2,7 +2,7 @@
 > [노마드 코더](https://nomadcoders.co/)의 줌 클론코딩 강의를 수강하며 만든 프로젝트입니다.
 
 ## Project result
-![localhost_3000_](https://github.com/JisooOvO/Clone-Coding-Zoom/assets/138751028/4563f51a-be2e-4146-ac0b-5cce00a53555)
+![localhost_3000_ (1)](https://github.com/JisooOvO/Clone-Coding-Zoom/assets/138751028/0a71e7bb-93b4-4721-aa09-e72d3b55d328)
 
 ## 결과
 - socket.io 를 통한 1대1 채팅 구현
