@@ -20,10 +20,10 @@
 ## 개발 환경
 - Chrome
 - VS Code
-- Node.js 18.18.0v
-- NPM 9.8.1v
-- Express 4.18.2v
-- localtunnel 2.0.2v
+- Node.js 18.18.0
+- NPM 9.8.1
+- Express 4.18.2
+- localtunnel 2.0.2
 - pug 3.0.2
-- socket.io 4.7.4v
-- ws 8.16.0v
+- socket.io 4.7.4
+- ws 8.16.0
