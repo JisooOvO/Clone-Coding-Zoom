@@ -16,7 +16,7 @@
   - DataChannel 이용하여 텍스트 전송 가능
   - 다수의 peer 요구시 부적합 -> SFU 사용 
 - node.js express로 서버 구현하는 방법
-- 
+  
 ## 개발 환경
 - Chrome
 - VS Code
