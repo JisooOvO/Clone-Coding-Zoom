@@ -87,6 +87,8 @@ function addMessage(messages){
  * webRTC : peer-to-peer 방식
  *          서버에 연결되지 않고 클라이언트간 연결하여 영상/오디오/텍스트 전송
  *          서버는 시그널링 -> 각 유저의 위치 및 정보를 알려줌
+ *          peer가 너무 많아지면 느려짐
+ *          대신 SFU 서버를 사용하여 스트림 압축 후 전송
  */
 function makeConnection(){
     // RTC peer 연결
